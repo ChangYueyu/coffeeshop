@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin Orders — StudyNest Café</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+<header class="main-header">
+  <div class="logo">StudyNest Café Admin ☕️</div>
+  <nav class="main-nav">
+    <a href="{{ url_for('home') }}" class="nav-link active">Back to Home</a>
+    <a href="{{ url_for('logout') }}" class="nav-link">Log out</a>
+  </nav>
+</header>
+
+<main style="max-width: 1100px; margin: 30px auto; padding: 0 20px;">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div style="margin-bottom: 20px;">
+        {% for message in messages %}
+          <div style="background:#fff3cd; color:#664d03; padding:12px 16px; border-radius:12px; margin-bottom:10px;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <section class="card" style="margin-bottom: 20px;">
+    <h1 style="margin-top:0;">Admin Order Dashboard</h1>
+    <p class="small-text" style="margin-bottom:0;">
+      Logged in as <strong>{{ current_user.email }}</strong> ({{ current_user.role }})
+    </p>
+  </section>
+
+  <section class="card">
+    <h2 style="margin-top:0;">All Orders</h2>
+
+    {% if orders %}
+      <div class="history-list">
+        {% for order in orders %}
+          <div class="history-item" style="padding:16px; border:1px solid #eee; border-radius:12px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+              <div>
+                <strong>Order #{{ order.id }}</strong>
+                <div class="small-text" style="opacity:.75;">
+                  {{ order.created_at.strftime('%Y-%m-%d %H:%M:%S') if order.created_at else '' }}
+                </div>
+                <div class="small-text" style="margin-top:4px;">
+                  Customer:
+                  {% if order.user %}
+                    {{ order.user.email }}
+                  {% else %}
+                    Unknown
+                  {% endif %}
+                </div>
+                <div class="small-text" style="margin-top:4px;">
+                  Payment: {{ order.payment_status }} · Method: {{ order.payment_method }}
+                </div>
+              </div>
+
+              <div style="text-align:right;">
+                <div><strong>Total: £{{ '%.2f'|format(order.total) }}</strong></div>
+                <div class="small-text" style="opacity:.75;">Subtotal: £{{ '%.2f'|format(order.subtotal) }}</div>
+                <div class="small-text" style="opacity:.75;">Discount: £{{ '%.2f'|format(order.discount) }}</div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px;">
+              <strong>Items:</strong>
+              <ul style="margin:8px 0 0 18px;">
+                {% for item in order.order_items %}
+                  <li>
+                    {{ item.item_name_snapshot }} × {{ item.quantity }}
+                    — £{{ '%.2f'|format(item.item_price_snapshot) }}
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+
+            <div style="margin-top:14px;">
+              <form method="POST" action="{{ url_for('update_order_status', order_id=order.id) }}" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <label for="status-{{ order.id }}"><strong>Status:</strong></label>
+                <select id="status-{{ order.id }}" name="order_status" style="padding:8px 12px; border-radius:10px; border:1px solid #ccc;">
+                  <option value="pending" {% if order.order_status == 'pending' %}selected{% endif %}>pending</option>
+                  <option value="preparing" {% if order.order_status == 'preparing' %}selected{% endif %}>preparing</option>
+                  <option value="ready" {% if order.order_status == 'ready' %}selected{% endif %}>ready</option>
+                  <option value="completed" {% if order.order_status == 'completed' %}selected{% endif %}>completed</option>
+                </select>
+                <button class="btn btn-primary" type="submit">Update Status</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="hint">No orders found.</p>
+    {% endif %}
+  </section>
+</main>
+</body>
+</html>
